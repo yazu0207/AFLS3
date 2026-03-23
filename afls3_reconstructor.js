@@ -75,6 +75,7 @@ export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
       g3.map(x=>x.number),
       g4.map(x=>x.number),
       g5.map(x=>x.number)
-    ]
+    ],
+    heatmap: cells   //
   }
 }

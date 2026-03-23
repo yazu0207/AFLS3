@@ -1,15 +1,11 @@
+<script type="text/plain" id="js-file">
 export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
 
   const parse = t =>
     t.trim().split(/\r?\n/).map(r => r.split(',').map(v => v.trim()))
 
-  /* ===== Heatmap ===== */
   const hRaw = parse(heatmapCsvText)
   const h = hRaw.slice(1).map(r => r.slice(1).map(Number))
-
-  if (h.length !== 5 || h.some(r => r.length !== 7)) {
-    throw new Error("Heatmapは5x7必須")
-  }
 
   let cells = []
   for (let y=0;y<5;y++){
@@ -24,7 +20,6 @@ export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
     c.zone = i<21?"HOT":"COLD"
   })
 
-  /* ===== AFLS ===== */
   const aRaw = parse(aflsCsvText)
   const rows = aRaw.slice(1)
 
@@ -36,8 +31,6 @@ export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
       if (!Number.isFinite(n)) return
 
       const cell = cells.find(c=>c.x===x && c.y===y)
-
-      // ★ここが超重要（クラッシュ防止）
       if (!cell) return
 
       mapped.push({
@@ -48,11 +41,6 @@ export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
     })
   })
 
-  if (mapped.length !== 35) {
-    throw new Error("AFLSデータが35個ではありません")
-  }
-
-  /* ===== 再構築 ===== */
   const shuffle = a => [...a].sort(()=>Math.random()-0.5)
   const pick = (a,n)=>shuffle(a).slice(0,n)
 
@@ -76,10 +64,7 @@ export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
       g4.map(x=>x.number),
       g5.map(x=>x.number)
     ],
-    heatmap: cells   //
+    heatmap: cells
   }
 }
-
-    container.appendChild(table)
-  })
-}
+</script>

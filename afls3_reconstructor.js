@@ -78,35 +78,7 @@ export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
     ],
     heatmap: cells   //
   }
-function renderResultMatrix(groups) {
-  const container = document.getElementById('output')
-  container.innerHTML = ''
-
-  groups.forEach((group, i) => {
-    const title = document.createElement('div')
-    title.textContent = `パターン ${i+1}`
-    container.appendChild(title)
-
-    const table = document.createElement('table')
-
-    for (let r = 0; r < 5; r++) {
-      const tr = document.createElement('tr')
-
-      for (let c = 0; c < 7; c++) {
-        const td = document.createElement('td')
-
-        const index = r * 7 + c
-        td.textContent = group[index] ?? ''
-
-        td.style.border = '1px solid #333'
-        td.style.width = '40px'
-        td.style.height = '40px'
-
-        tr.appendChild(td)
-      }
-
-      table.appendChild(tr)
-    }
+}
 
     container.appendChild(table)
   })

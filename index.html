@@ -14,10 +14,17 @@ td { width:50px; height:50px; text-align:center; border:1px solid #333 }
 </head>
 <body>
 <h2>AFLSⅢ Tool</h2>
-
-<input type="file" id="aflsCsv">
-<input type="file" id="heatmapCsv"><br>
-
+  
+<div>
+  <h3>AFLS出力データ</h3>
+  <input type="file" id="aflsCsv">
+</div>
+  
+<div>
+  <h3>ヒートマップデータ</h3>
+  <input type="file" id="heatmapCsv">
+</div>
+  
 <button id="runBtn">再構築</button>
 <button id="exportBtn">CSV保存</button>
 

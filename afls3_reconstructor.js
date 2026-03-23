@@ -1,4 +1,3 @@
-<script type="text/plain" id="js-file">
 export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
 
   const parse = t =>
@@ -67,4 +66,3 @@ export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
     heatmap: cells
   }
 }
-</script>

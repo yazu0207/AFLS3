@@ -5,34 +5,41 @@
 <title>AFLSⅢ Tool</title>
 <style>
 body { font-family: sans-serif; background:#0b1020; color:#fff; padding:20px }
+h2,h3{margin:10px 0}
 button { padding:8px 12px; margin:5px }
-table { border-collapse: collapse; margin-top:10px }
-td { width:50px; height:50px; text-align:center; border:1px solid #333 }
+.container{display:flex; gap:40px; align-items:flex-start}
+.block{margin-bottom:20px}
+table { border-collapse: collapse; margin:10px 0 }
+td { width:45px; height:45px; text-align:center; border:1px solid #333 }
 .hot { background:#8b0000 }
 .cold { background:#1c2a44 }
+.resultTable td{background:#111}
 </style>
 </head>
 <body>
+
 <h2>AFLSⅢ Tool</h2>
-  
-<div>
-  <h3>AFLS出力データ</h3>
-  <input type="file" id="aflsCsv">
+
+<div class="container">
+  <div class="block">
+    <h3>AFLS出力データ</h3>
+    <input type="file" id="aflsCsv">
+  </div>
+
+  <div class="block">
+    <h3>ヒートマップデータ</h3>
+    <input type="file" id="heatmapCsv">
+  </div>
 </div>
-  
-<div>
-  <h3>ヒートマップデータ</h3>
-  <input type="file" id="heatmapCsv">
-</div>
-  
+
 <button id="runBtn">再構築</button>
 <button id="exportBtn">CSV保存</button>
 
 <h3>ヒートマップ</h3>
 <div id="heatmap"></div>
 
-<h3>結果</h3>
-<pre id="output"></pre>
+<h3>結果（マトリックス表示）</h3>
+<div id="output"></div>
 
 <h3>履歴</h3>
 <pre id="history"></pre>
@@ -42,12 +49,12 @@ import { reconstructAFLS } from './afls3_reconstructor.js'
 
 const aflsInput = document.getElementById('aflsCsv')
 const heatmapInput = document.getElementById('heatmapCsv')
-const output = document.getElementById('output')
 const heatmapDiv = document.getElementById('heatmap')
+const output = document.getElementById('output')
 const historyDiv = document.getElementById('history')
 
-let history = []
 let latestResult = null
+let history = []
 
 function readFile(file){
   return new Promise(r=>{
@@ -58,6 +65,7 @@ function readFile(file){
 }
 
 function renderHeatmap(cells){
+  if(!cells) return
   heatmapDiv.innerHTML = ''
   const table = document.createElement('table')
 
@@ -70,94 +78,4 @@ function renderHeatmap(cells){
 
       td.textContent = c.rank
       td.className = c.zone === 'HOT' ? 'hot':'cold'
-
-      tr.appendChild(td)
-    }
-    table.appendChild(tr)
-  }
-
-  heatmapDiv.appendChild(table)
-}
-
-function renderResultMatrix(groups) {
-  const container = document.getElementById('output')
-  container.innerHTML = ''
-
-  groups.forEach((group, i) => {
-    const title = document.createElement('div')
-    title.textContent = `パターン ${i+1}`
-    container.appendChild(title)
-
-    const table = document.createElement('table')
-
-    for (let r = 0; r < 5; r++) {
-      const tr = document.createElement('tr')
-
-      for (let c = 0; c < 7; c++) {
-        const td = document.createElement('td')
-
-        const index = r * 7 + c
-        td.textContent = group[index] ?? ''
-
-        td.style.border = '1px solid #333'
-        td.style.width = '40px'
-        td.style.height = '40px'
-
-        tr.appendChild(td)
-      }
-
-      table.appendChild(tr)
-    }
-
-    container.appendChild(table)
-  })
-}
-
-function saveHistory(result){
-  history.push(result.groups)
-  historyDiv.textContent = JSON.stringify(history,null,2)
-}
-
-document.getElementById('runBtn').onclick = async ()=>{
-  try{
-    if(!aflsInput.files[0] || !heatmapInput.files[0]){
-      alert('CSV選択')
-      return
-    }
-
-    const afls = await readFile(aflsInput.files[0])
-    const heat = await readFile(heatmapInput.files[0])
-
-    const result = reconstructAFLS(afls, heat)
-    latestResult = result
-
-    output.textContent = JSON.stringify(result.groups,null,2)
-    renderHeatmap(result.heatmap)
-    saveHistory(result)
-
-  }catch(e){
-    alert(e.message)
-    console.error(e)
-  }
-}
-
-document.getElementById('exportBtn').onclick=()=>{
-  if(!latestResult) return alert('未実行')
-
-  let csv='group,n1,n2,n3,n4,n5,n6,n7\n'
-  latestResult.groups.forEach((g,i)=>{
-    csv+=`${i+1},${g.join(',')}\n`
-  })
-
-  const blob=new Blob([csv])
-  const url=URL.createObjectURL(blob)
-
-  const a=document.createElement('a')
-  a.href=url
-  a.download='result.csv'
-  a.click()
-}
-</script>
-
-</body>
 </html>

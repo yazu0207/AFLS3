@@ -52,6 +52,8 @@ const heatmapInput = document.getElementById('heatmapCsv')
 const heatmapDiv = document.getElementById('heatmap')
 const output = document.getElementById('output')
 const historyDiv = document.getElementById('history')
+const runBtn = document.getElementById('runBtn')
+const exportBtn = document.getElementById('exportBtn')
 
 let latestResult = null
 let history = []
@@ -74,8 +76,59 @@ function renderHeatmap(cells){
     for(let x=0;x<7;x++){
       const td=document.createElement('td')
       const c = cells.find(v=>v.x===x && v.y===y)
-      if(!c) continue
+      if(c){
+        td.textContent = c.rank
+        td.className = c.zone === 'HOT' ? 'hot':'cold'
+      }
+      tr.appendChild(td)
+    }
+    table.appendChild(tr)
+  }
 
-      td.textContent = c.rank
-      td.className = c.zone === 'HOT' ? 'hot':'cold'
+  heatmapDiv.appendChild(table)
+}
+
+runBtn.addEventListener('click', async () => {
+  if (!aflsInput.files[0] || !heatmapInput.files[0]) {
+    alert("CSVを両方選択してください")
+    return
+  }
+
+  const aflsText = await readFile(aflsInput.files[0])
+  const heatText = await readFile(heatmapInput.files[0])
+
+  const result = reconstructAFLS(aflsText, heatText)
+
+  latestResult = result
+  history.push(result.groups)
+
+  renderHeatmap(result.heatmap)
+
+  output.innerHTML = result.groups
+    .map((g,i)=>`<p>G${i+1}: ${g.join(', ')}</p>`)
+    .join('')
+
+  historyDiv.textContent = JSON.stringify(history, null, 2)
+})
+
+exportBtn.addEventListener('click', () => {
+  if (!latestResult) {
+    alert("先に再構築してください")
+    return
+  }
+
+  const csv = latestResult.groups.map(g=>g.join(',')).join('\n')
+  const blob = new Blob([csv], {type:'text/csv'})
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'afls_result.csv'
+  a.click()
+
+  URL.revokeObjectURL(url)
+})
+</script>
+
+</body>
 </html>

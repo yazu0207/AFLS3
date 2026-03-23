@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AFLSⅢ Tool</title>
+<style>
+body { font-family: sans-serif; background:#0b1020; color:#fff; padding:20px }
+button { padding:8px 12px; margin:5px }
+table { border-collapse: collapse; margin-top:10px }
+td { width:50px; height:50px; text-align:center; border:1px solid #333 }
+.hot { background:#8b0000 }
+.cold { background:#1c2a44 }
+</style>
+</head>
+<body>
+<h2>AFLSⅢ Tool</h2>
+
+<input type="file" id="aflsCsv">
+<input type="file" id="heatmapCsv"><br>
+
+<button id="runBtn">再構築</button>
+<button id="exportBtn">CSV保存</button>
+
+<h3>ヒートマップ</h3>
+<div id="heatmap"></div>
+
+<h3>結果</h3>
+<pre id="output"></pre>
+
+<h3>履歴</h3>
+<pre id="history"></pre>
+
+<script type="module">
+import { reconstructAFLS } from './afls3_reconstructor.js'
+
+const aflsInput = document.getElementById('aflsCsv')
+const heatmapInput = document.getElementById('heatmapCsv')
+const output = document.getElementById('output')
+const heatmapDiv = document.getElementById('heatmap')
+const historyDiv = document.getElementById('history')
+
+let history = []
+let latestResult = null
+
+function readFile(file){
+  return new Promise(r=>{
+    const fr = new FileReader()
+    fr.onload=e=>r(e.target.result)
+    fr.readAsText(file)
+  })
+}
+
+function renderHeatmap(cells){
+  heatmapDiv.innerHTML = ''
+  const table = document.createElement('table')
+
+  for(let y=0;y<5;y++){
+    const tr=document.createElement('tr')
+    for(let x=0;x<7;x++){
+      const td=document.createElement('td')
+      const c = cells.find(v=>v.x===x && v.y===y)
+      if(!c) continue
+
+      td.textContent = c.rank
+      td.className = c.zone === 'HOT' ? 'hot':'cold'
+
+      tr.appendChild(td)
+    }
+    table.appendChild(tr)
+  }
+
+  heatmapDiv.appendChild(table)
+}
+
+function saveHistory(result){
+  history.push(result.groups)
+  historyDiv.textContent = JSON.stringify(history,null,2)
+}
+
+document.getElementById('runBtn').onclick = async ()=>{
+  try{
+    if(!aflsInput.files[0] || !heatmapInput.files[0]){
+      alert('CSV選択')
+      return
+    }
+
+    const afls = await readFile(aflsInput.files[0])
+    const heat = await readFile(heatmapInput.files[0])
+
+    const result = reconstructAFLS(afls, heat)
+    latestResult = result
+
+    output.textContent = JSON.stringify(result.groups,null,2)
+    renderHeatmap(result.heatmap)
+    saveHistory(result)
+
+  }catch(e){
+    alert(e.message)
+    console.error(e)
+  }
+}
+
+document.getElementById('exportBtn').onclick=()=>{
+  if(!latestResult) return alert('未実行')
+
+  let csv='group,n1,n2,n3,n4,n5,n6,n7\n'
+  latestResult.groups.forEach((g,i)=>{
+    csv+=`${i+1},${g.join(',')}\n`
+  })
+
+  const blob=new Blob([csv])
+  const url=URL.createObjectURL(blob)
+
+  const a=document.createElement('a')
+  a.href=url
+  a.download='result.csv'
+  a.click()
+}
+</script>
+
+</body>
+</html>

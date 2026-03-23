@@ -13,6 +13,7 @@ export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
     }
   }
 
+  // ヒートマップ順位付け
   cells.sort((a,b)=>b.value-a.value)
   cells.forEach((c,i)=>{
     c.rank=i+1
@@ -46,22 +47,69 @@ export function reconstructAFLS(aflsCsvText, heatmapCsvText) {
   const hot = mapped.filter(x=>x.zone==="HOT").sort((a,b)=>a.rank-b.rank)
   const cold = mapped.filter(x=>x.zone==="COLD")
 
-  const g1 = pick(hot.slice(0,9),7)
-  const remain = hot.filter(x=>!g1.includes(x))
+  // =========================
+  // 🔥 G1（分層抽選）
+  // =========================
 
-  const g2 = pick(remain,7)
-  const g3 = pick(remain.filter(x=>!g2.includes(x)),7)
+  const top1_7   = hot.filter(x => x.rank >= 1  && x.rank <= 7)
+  const top8_14  = hot.filter(x => x.rank >= 8  && x.rank <= 14)
+  const top15_21 = hot.filter(x => x.rank >= 15 && x.rank <= 21)
+
+  const g1 = [
+    ...pick(top1_7, 4),
+    ...pick(top8_14, 2),
+    ...pick(top15_21, 1)
+  ]
+
+  // =========================
+  // 🔥 G2（取りこぼし＋中位補完）
+  // =========================
+
+  const g1Set = new Set(g1)
+
+  // 上位1～7位でG1に選ばれなかったもの
+  const remainTop1_7 = top1_7.filter(x => !g1Set.has(x))
+
+  // 8～21位（G1除外）
+  const mid8_21 = hot.filter(x =>
+    x.rank >= 8 && x.rank <= 21 && !g1Set.has(x)
+  )
+
+  const g2 = [
+    ...remainTop1_7,
+    ...pick(mid8_21, 7 - remainTop1_7.length)
+  ]
+
+  // =========================
+  // 残りHOT
+  // =========================
+
+  const used = new Set([...g1, ...g2])
+
+  const remainHot = hot.filter(x => !used.has(x))
+
+  const g3 = pick(remainHot,7)
+
+  // =========================
+  // COLD
+  // =========================
 
   const g4 = pick(cold,7)
   const g5 = pick(cold.filter(x=>!g4.includes(x)),7)
 
+  // =========================
+  // 🔧 昇順ソート
+  // =========================
+
+  const sortAsc = arr => arr.map(x=>x.number).sort((a,b)=>a-b)
+
   return {
     groups:[
-      g1.map(x=>x.number),
-      g2.map(x=>x.number),
-      g3.map(x=>x.number),
-      g4.map(x=>x.number),
-      g5.map(x=>x.number)
+      sortAsc(g1),
+      sortAsc(g2),
+      sortAsc(g3),
+      sortAsc(g4),
+      sortAsc(g5)
     ],
     heatmap: cells
   }
